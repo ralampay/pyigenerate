@@ -1,0 +1,11 @@
+{
+  "img_width": 128,
+  "img_height": 128,
+  "device": "cuda",
+  "gpu_index": 0,
+  "input_img_dir": "/path",
+  "model_file": "model.pth",
+  "in_channels": 3,
+  "model_type": "cnn_vae",
+  "loss_type": "mse"
+}
