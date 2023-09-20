@@ -98,19 +98,14 @@ class CnnVae(nn.Module):
         x = self.encoding_layer_1(x)
         x = self.relu(x)
 
-        print(x.shape)
-
         x = self.encoding_layer_2(x)
         x = self.relu(x)
-        print(x.shape)
 
         x = self.encoding_layer_3(x)
         x = self.relu(x)
-        print(x.shape)
 
         x = self.encoding_layer_4(x)
         x = self.relu(x)
-        print(x.shape)
 
         # Average pool and flatten
         batch, _, _, _ = x.shape
@@ -134,19 +129,15 @@ class CnnVae(nn.Module):
     def decode(self, z):
         y = self.decoding_layer_1(z)
         y = self.relu(y)
-        print(y.shape)
 
         y = self.decoding_layer_2(y)
         y = self.relu(y)
-        print(y.shape)
 
         y = self.decoding_layer_3(y)
         y = self.relu(y)
-        print(y.shape)
 
         y = self.decoding_layer_4(y)
         y = self.sigmoid(y)
-        print(y.shape)
 
         return y
 

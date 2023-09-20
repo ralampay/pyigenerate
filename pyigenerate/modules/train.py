@@ -4,10 +4,12 @@ import torch
 import cv2
 import numpy as np
 from tqdm import tqdm
+import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from lib.utils import initialize_model
+from lib.utils import initialize_model, kl_divergence
 
 class Train:
     def __init__(self, params={}, seed=0):
@@ -16,7 +18,7 @@ class Train:
 
         self.params = params
 
-        self.img_width              = params.get('img_height')
+        self.img_width              = params.get('img_width')
         self.img_height             = params.get('img_height')
         self.device                 = params.get('device')
         self.gpu_index              = params.get('gpu_index')
@@ -24,11 +26,12 @@ class Train:
         self.epochs                 = params.get('epochs')
         self.model_file             = params.get('model_file')
         self.learning_rate          = params.get('learning_rate')
-        self.batch_size             = params.get('batch_size')
+        self.batch_size             = params.get('batch_size') or 2
         self.in_channels            = params.get('in_channels') or 3
         self.cont                   = params.get('cont') or False
-        self.loss_type              = params.get('loss_type') or 'CE'
-        self.model_type             = params.get('model_type') or 'cnn-vae'
+        self.loss_type              = params.get('loss_type') or 'KLD'
+        self.model_type             = params.get('model_type') or 'cnn_vae'
+        self.model_file             = params.get('model_file')
 
         self.model = None
 
@@ -57,3 +60,99 @@ class Train:
 
             self.model.load_state_dict(state['state_dict'])
             self.model.optimizer     = state['optimizer']
+
+        optimizer   = optim.Adam(self.model.parameters(), lr=self.learning_rate)
+        scaler      = torch.cuda.amp.GradScaler()
+
+        train_ds = CustomDataset(
+            image_dir=self.input_img_dir,
+            img_width=self.img_width,
+            img_height=self.img_height
+        )
+
+        train_loader = DataLoader(
+            train_ds,
+            batch_size=self.batch_size,
+            shuffle=False,
+            drop_last=False
+        )
+
+        for epoch in range(self.epochs):
+            print("Epoch: {}".format(epoch+1))
+
+            ave_loss = self.train_fn(
+                train_loader,
+                self.model,
+                optimizer,
+                scaler
+            )
+
+            print("Ave Loss: {}".format(ave_loss))
+
+            # Save model after every epoch
+            print("Saving model to {}...".format(self.model_file))
+
+            state = {
+                'state_dict': self.model.state_dict(),
+                'optimizer': optimizer.state_dict()
+            }
+
+            torch.save(state, self.model_file)
+
+    def train_fn(self, loader, model, optimizer, scaler):
+        loop = tqdm(loader)
+
+        ave_loss = 0.0
+        count = 0
+
+        for batch_idx, (data, targets) in enumerate(loop):
+            data    = data.float().to(device=self.device)
+            targets = targets.to(device=self.device)
+
+            # Forward
+            predictions, mu, log_var = model.forward(data)
+
+            #loss = loss_fn(predictions, targets)
+            loss = kl_divergence(predictions, targets, mu, log_var)
+
+            # Backward
+            optimizer.zero_grad()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
+            # update tqdm
+            loop.set_postfix(loss=loss.item())
+
+            # Write to tensorboard
+
+            ave_loss += loss.item()
+            count += 1
+
+        ave_loss = ave_loss / count
+
+        return ave_loss
+
+class CustomDataset(Dataset):
+    def __init__(self, image_dir, img_width, img_height):
+        self.image_dir      = image_dir
+        self.img_width      = img_width
+        self.img_height     = img_height
+        self.images         = sorted(os.listdir(image_dir))
+
+        self.dim = (img_width, img_height)
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        img_path = os.path.join(self.image_dir, self.images[index])
+
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        original_img = (cv2.resize(img, self.dim) / 255).transpose((2, 0, 1))
+
+        x = torch.Tensor(original_img)
+
+        return x, x
