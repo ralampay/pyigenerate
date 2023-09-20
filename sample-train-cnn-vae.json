@@ -2,12 +2,14 @@
   "img_width": 32,
   "img_height": 32,
   "device": "cuda",
+  "batch_size": 50,
   "gpu_index": 0,
-  "input_img_dir": "/home/ralampay/Projects/UNetAttnDPSegmentation/benchmarks/ebhi-seg-polyp-128-01/train/images",
+  "input_img_dir": "/home/ralampay/Desktop/archive/img_align_celeba/img_align_celeba",
   "model_file": "/home/ralampay/Desktop/test-vae.pth",
   "in_channels": 3,
   "model_type": "cnn_vae",
   "loss_type": "mse",
-  "learning_rate": 0.000001,
-  "epochs": 100
+  "learning_rate": 0.001,
+  "epochs": 100,
+  "cont": false
 }

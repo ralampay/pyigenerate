@@ -3,6 +3,8 @@ import argparse
 import os
 import os.path
 import json
+
+from pyigenerate.modules.sample import Sample
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 from modules.train import Train
 from modules.assert_model import AssertModel
@@ -32,6 +34,7 @@ def main():
     parser.add_argument("--batch-size", help="Batch size", type=int, default=1)
     parser.add_argument("--in-channels", help="In Channels", type=int, default=3)
     parser.add_argument("--loss-type", help="Loss type", type=str, default="mse")
+    parser.add_argument("--latent-dim", help="Latent dimensionality", type=int, default=8)
 
     args = parser.parse_args()
 
@@ -46,6 +49,7 @@ def main():
     in_channels     = args.in_channels
     model_type      = args.model_type
     loss_type       = args.loss_type
+    latent_dim      = args.latent_dim
 
     if mode == "train":
         params = {
@@ -78,6 +82,26 @@ def main():
         }
 
         cmd = AssertModel(params=params)
+        cmd.execute()
+
+    elif mode == "sample":
+        params = {
+            'device':       device,
+            'gpu_index':    gpu_index,
+            'model_type':   model_type,
+            'img_width':    img_width,
+            'img_height':   img_height,
+            'model_file':   model_file,
+            'model_type':   model_type,
+            'latent_dim':   latent_dim
+        }
+
+        if config_file:
+            with open(config_file) as json_file:
+                params = json.load(json_file)
+
+        cmd = Sample(params=params)
+
         cmd.execute()
 
     else:

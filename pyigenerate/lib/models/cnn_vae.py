@@ -126,6 +126,14 @@ class CnnVae(nn.Module):
 
         return z, mu, log_var
 
+    def sample(self, mu, log_var):
+        z = self.reparameterize(mu, log_var)
+        z = self.fully_connected_decoder(z)
+
+        z = z.view(-1, 64, 1, 1)
+
+        return self.decode(z)
+
     def decode(self, z):
         y = self.decoding_layer_1(z)
         y = self.relu(y)
