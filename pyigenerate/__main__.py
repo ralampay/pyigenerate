@@ -1,15 +1,15 @@
 import sys
 import argparse
 import os
-import datetime
 import os.path
 import json
-from torch.utils.data import Dataset, DataLoader
 sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
-from lib.train import Train
+from modules.train import Train
+from modules.assert_model import AssertModel
 
 mode_choices = [
     "train",
+    "assert-model",
     "sample"
 ]
 
@@ -22,9 +22,9 @@ def main():
 
     parser.add_argument("--mode", help="Mode to be used", choices=mode_choices, type=str, required=True)
     parser.add_argument("--config-file", help="Config file", type=str)
-    parser.add_argument("--img-width", help="Image width", type=int, default=256)
-    parser.add_argument("--img-height", help="Image height", type=int, default=256)
-    parser.add_argument("--device", help="Device used for training", choices=["cpu", "cuda"], type=str, default="cpu")
+    parser.add_argument("--img-width", help="Image width", type=int, default=128)
+    parser.add_argument("--img-height", help="Image height", type=int, default=128)
+    parser.add_argument("--device", help="Device used for training", choices=["cpu", "cuda"], type=str, default="cuda")
     parser.add_argument("--gpu-index", help="GPU index", type=int, default=0)
     parser.add_argument("--input-img-dir", help="Input image directory", type=str)
     parser.add_argument("--model-file", help="Model file", type=str, default="model.pth")
@@ -65,6 +65,19 @@ def main():
                 params = json.load(json_file)
 
         cmd = Train(params=params)
+        cmd.execute()
+
+    elif mode == "assert-model":
+        params = {
+            'device':       device,
+            'gpu_index':    gpu_index,
+            'model_type':   model_type,
+            'img_width':    img_width,
+            'img_height':   img_height,
+            'in_channels':  in_channels
+        }
+
+        cmd = AssertModel(params=params)
         cmd.execute()
 
     else:
