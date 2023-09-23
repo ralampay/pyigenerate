@@ -89,7 +89,7 @@ class CnnVae(nn.Module):
     def reparameterize(self, mu, log_var):
         std = torch.exp(0.5*log_var)    # standard deviation
         eps = torch.rand_like(std)      # same size as std
-        sample = mu + (eps * std)
+        sample = mu + (std * eps)
 
         return sample
 

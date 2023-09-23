@@ -1,9 +1,10 @@
 {
-  "img_width": 28,
-  "img_height": 28,
+  "img_width": 32,
+  "img_height": 32,
   "device": "cuda",
   "gpu_index": 0,
   "model_file": "/home/ralampay/Desktop/test-vae.pth",
   "model_type": "cnn_vae",
-  "latent_dim": 5
+  "latent_dim": 5,
+  "input_img_dir": "/home/ralampay/Desktop/archive/img_align_celeba/img_align_celeba"
 }
